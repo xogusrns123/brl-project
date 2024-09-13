@@ -37,6 +37,8 @@ class StrategyOptimizer:
         self.output_seq_len = output_seq_len
         self.max_tp = self.profile_data["max_tp"]
 
+    # 주어진 노드 수와 필요한 처리량(tpt)에 맞춰 최적화된 병렬화 전략 계산
+    # return: (dp, tp, pp, bsz, M1, M2, latency, tpt)
     def solve(self, prev_strategy, nnodes, max_bsz, min_tpt, output_seq_len=None, debug=False):
         if self.min_ws > nnodes:
             return (0, ) * 8
@@ -93,6 +95,7 @@ class StrategyOptimizer:
 
         return res[idx] if idx >= 0 else mtpt_res
 
+    # 주어진 병렬화 전략에 대한 예산 지연 시간 (latency)를 계산
     def get_approx_latency(self, tp, pp, bsz, M1, M2, output_seq_len=None):
         if output_seq_len is None:
             output_seq_len = self.output_seq_len
@@ -109,6 +112,7 @@ class StrategyOptimizer:
         lat *= self.profile_data['final_fix_factor']
         return lat, t1 * self.profile_data['final_fix_factor'], t2 * self.profile_data['final_fix_factor']
 
+    # 주어진 시간 slot에서 남은 작업량을 예측합니다.
     def estimate_remain_steps(self, slot, tp, pp, bsz, M1, M2):
         lat, t1, t2 = self.get_approx_latency(tp, pp, bsz, M1, M2)
         t1, t2 = t1/1000, t2/1000
@@ -120,6 +124,7 @@ class StrategyOptimizer:
         else:
             return step
 
+    # 미래 노드 수와 처리량에 따라 동적 프로그래밍 방식으로 병렬화 전략을 예측
     def dp_predict(self, prev_strategy, s0, future_nodes, max_tp, max_bsz, min_tpt, arrival_rate, output_seq_len=None, debug=False):
         # s0, number of request which is not finished now
         # future_nodes: list[3], availble nodes when [now, 1min later, 2min later]
@@ -131,7 +136,7 @@ class StrategyOptimizer:
         min_lat, res = self._do_dp(0, prev_strategy, s0, last_cfg, future_nodes, max_tp, max_bsz, output_seq_len, arrival_rate, debug=debug)
         return res
 
-
+    # 동적 프로그래밍을 사용하여 최적의 전략을 계산
     def _do_dp(self, step, cfg, s, last_cfg, future_nodes, max_tp, max_bsz, arrival_rate, output_seq_len=None, debug=False):
         if output_seq_len is None:
             output_seq_len = self.output_seq_len
@@ -173,6 +178,7 @@ class StrategyOptimizer:
 
         return min_lat, min_res
 
+    # 병렬화 전략을 변경하는데 걸리는 시간
     def get_swich_time(self, old_cfg, new_cfg, debug=False):
         if old_cfg == new_cfg:
             return 0
@@ -187,6 +193,7 @@ class StrategyOptimizer:
         # return res
         return 10.0
 
+    # 사용 가능한 노드 수에 따라 모든 가능한 병렬화 전략을 생성
     def gen_all_strat(self, max_tp, max_bsz, n_nodes):
         res = []
         tp = 1

@@ -1,5 +1,6 @@
 #include "src/fastertransformer/utils/request_pool.h"
 #include <iostream>
+#include "./logger.h"
 
 Request::Request(std::ifstream& infile, int id, int offset)
     : id_(id),

@@ -69,7 +69,8 @@ def get_param_client_cmd(hosts, cfg, ckpt_path, strategy):
         ifname = os.environ['NCCL_SOCKET_IFNAME']
         env_str += f' -x NCCL_SOCKET_IFNAME={ifname} '
         env_str = f' -mca btl_tcp_if_include {ifname} ' + env_str
-    cmd = f'{MPI_EXEC} -np {nprocs} -host {hoststr} {env_str} {PARAM_CLIENT_EXEC} {cfg} {ckpt_path} {MASTER_IP} {MASTER_PORT} {strategy[0]} {strategy[1]} {strategy[2]}'
+    cmd = f'{MPI_EXEC} --oversubscribe -np {nprocs} -host {hoststr} {env_str} {PARAM_CLIENT_EXEC} {cfg} {ckpt_path} {MASTER_IP} {MASTER_PORT} {strategy[0]} {strategy[1]} {strategy[2]}'
+    # cmd ="/usr/bin/mpirun --hostfile /home/kth/brl/SpotServe/elastic-switch/trace/hostnameT4 --mca orte_base_help_aggregate 0 -np 6 /home/kth/brl/hello_mpi"
     print(f'[{datetime.now()}] {cmd}')
     return cmd
 
@@ -102,7 +103,7 @@ def get_ft_cmd(hosts, cfg, replica_id, tp_deg, pp_deg, mbs, M1, M2, server_ip, s
         env_str += f' -x NCCL_SOCKET_IFNAME={ifname} '
         env_str = f' -mca btl_tcp_if_include {ifname} ' + env_str
 
-    cmd = f'{MPI_EXEC} -np {nprocs} -host {hoststr} {coord_env} {env_str} {prefix} {FT_INFER_EXEC} {mbs} {replica_id} {tp_deg} {pp_deg} {server_ip} {server_port} {cfg} {query_file} {profile_path}'
+    cmd = f'{MPI_EXEC} --oversubscribe -np {nprocs} -host {hoststr} {coord_env} {env_str} {prefix} {FT_INFER_EXEC} {mbs} {replica_id} {tp_deg} {pp_deg} {server_ip} {server_port} {cfg} {query_file} {profile_path}'
     print(f'[{datetime.now()}] {cmd}')
     return cmd
 

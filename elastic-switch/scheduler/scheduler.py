@@ -37,7 +37,7 @@ class Scheduler:
         self.query_file = query_file
         self.mbs = mbs
         self.approach = approach
-        self.required_tpt = required_tpt
+        self.required_tpt = required_tpt # tpt: 요청 처리율
         self.init_strategy = init_strategy
         self.min_world_size = min_world_size
         self.grace_period = grace_period
@@ -148,16 +148,20 @@ class Scheduler:
 
     def deploy_global_server(self):
         all_hosts = self.trace_replayer.get_available_hosts()
-
+        print(all_hosts)
         server_ip, server_port = sched_cmd.get_master_node()
+        print(server_ip, server_port)
         tcp_server = TcpServer(server_ip, server_port)
-
+        print(tcp_server)
         tcp_thread = TcpThread(tcp_server, {})
         tcp_thread.setDaemon(True)
+        tcp_thread.daemon = True
         tcp_thread.start()
+        print(self.max_world_size)
         while len(tcp_thread.agent_dict) != self.max_world_size:
             # FIXME: naive way to wait for all agents to connect
             self.sleep(0.05)
+            # print(tcp_thread.agent_dict)
 
         # assign pc_rank to VNodes
         ip_to_start_rank = {}
@@ -239,9 +243,7 @@ class Scheduler:
         if cur_nodes is None:
             # experimental: start a param client for all hosts
             cur_nodes = self.trace_replayer.get_available_hosts()
-
         cmd = sched_cmd.get_param_client_cmd(cur_nodes, self.model_cfg, self.checkpoint_path, start_strategy)
-
         current_env = os.environ.copy()
         logfn = sched_cmd.get_logfile('param_client')
         out_file = open(logfn, 'a')
@@ -277,6 +279,7 @@ class Scheduler:
 
         self.close_ft_hook_fn = fallback_hook
 
+    # start Faster Transformer servers
     def start_ft_servers(self, available_nodes, next_strategy, replicas_to_start=None):
         replica, tp, pp, bsz, M1, M2 = next_strategy
         if replicas_to_start is None:
@@ -644,9 +647,12 @@ class Scheduler:
 
     def run(self):
         # 1. start a param client for each host to hold checkpoints
+        print("start deploy param client")
         self.deploy_param_client()
+        print("start deploy global server")
         # 2. start a global server to manage the param client
         self.deploy_global_server()
+        print("start deploy api server")
         # 3. start an api server to serve the inference requests
         self.deploy_api_server()
 
@@ -657,6 +663,7 @@ class Scheduler:
         last_event_id = -1
         available_nodes = set()
         for event_id, event in enumerate(self.trace_replayer):
+            print(f"event_id, event: {event_id, event}")
             if event_id <= last_event_id:
                 continue
             
@@ -676,6 +683,8 @@ class Scheduler:
             print(f'[{datetime.now()}] ({self.cur_timestamp():.3f}) next-event: {operation} at {tstamp / 1000:.3f}, waiting...', flush=True)
             noti_tstamp = tstamp / 1000
             # if operation in ['remove', 'DONE']:
+
+            # instance가 변경되면 grace_period가 있으니 이를 고려해서 전에 까지 멈춤
             noti_tstamp -= self.grace_period
             self.wait_till(noti_tstamp)
 

@@ -51,6 +51,7 @@ def main():
                           args.ablation if args.ablation != 'naive' else None, not args.old_batching)
 
     # process requests
+    print("start scheduler")
     scheduler.run()
 
 

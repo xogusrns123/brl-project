@@ -27,10 +27,11 @@ if [ $2 == "6.7B" ]; then
     REQUIRED_TPT=2
     CFG=${BASE_DIR}/FasterTransformer/examples/cpp/multi_gpu_gpt/configs/gpt_config_${model}.ini
     QUERY_FILE=${BASE_DIR}/elastic-switch/trace/query/query6144_seq512.csv
-    QUERY_TRACE=${BASE_DIR}/elastic-switch/trace/query/query6144_tpt${TPT}_cv${CV}.txt
+    QUERY_TRACE=${BASE_DIR}/elastic-switch/trace/query/query6144_tpt${TPT}_cv${CV}_test.txt
     CKPT_PATH=${BASE_DIR}/ckpt/${model}/
     MAX_BS=4
     MAX_NNODES=10
+    # MAX_NNODES=2
     MIN_WORLD_SIZE=4
     GPU_PER_NODE=4
     PROFILE_PATH=${BASE_DIR}/elastic-switch/profile/T4-4x/megatron_${model}_profile.json
@@ -83,6 +84,12 @@ elif [ $3 == "As+o" ]; then
 elif [ $3 == "Bs+o" ]; then
     TRACE_NAME="trace_0506_ondemand"
     export LOG_PATH="$WORK_DIR/log/${model}/ondemand/${APPROACH}_tpt${TPT}_cv${CV}-0506"
+elif [ $3 == "test" ]; then
+    TRACE_NAME="trace_test"
+    export LOG_PATH="$WORK_DIR/log/${model}/test/${APPROACH}_tpt${TPT}_cv${CV}-0506"
+elif [ $3 == "test_single" ]; then
+    TRACE_NAME="trace_test_single"
+    export LOG_PATH="$WORK_DIR/log/${model}/test_single/${APPROACH}_tpt${TPT}_cv${CV}-0506"
 else
     echo "Invalid trace: $3, should be one of [As, Bs, As+o, Bs+o]"
     exit 1
@@ -91,7 +98,7 @@ fi
 mkdir -p $LOG_PATH
 
 # $WORK_DIR/trace/test.txt
-python $WORK_DIR/main.py $FLAGS \
+python3 $WORK_DIR/main.py $FLAGS \
     --trace-file $WORK_DIR/trace/trace_seg/$TRACE_NAME.txt \
     --hostfile $WORK_DIR/trace/hostfile_aws_T4 \
     --query-trace ${QUERY_TRACE} \

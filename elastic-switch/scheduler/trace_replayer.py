@@ -84,6 +84,9 @@ class TraceReplayer:
                 if len(self.physical_node_to_vnodes) == self.nnodes:
                     break
 
+        print(f"hosts:{self.hosts}")
+        print(f"physical_to_vnods:{self.physical_node_to_vnodes}")
+        print(f"ip_to_gpus:{ip_to_gpus}")
         # assign local rank
         for ip in ip_to_gpus:
             ip_to_gpus[ip].sort()
@@ -123,6 +126,8 @@ class TraceReplayer:
                             nodes.append(self.hosts[vhost_id])
                 event[2]['nodes'] = nodes
                 self.trace.append(event)
+
+        print(f"trace:{self.trace}")
 
     def get_available_hosts(self, timestamp=None):
         if timestamp is None:

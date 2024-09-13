@@ -510,7 +510,7 @@ class APIServer:
                             await request_agent.async_send(struct.pack('ii', -3, num_queries))
                         for _ in range(num_queries):
                             query_id, tstamp, _, query_offset = self.queries[0].info()
-                            print(f'[{datetime.now()}] >>>>> ({self.cur_timestamp():.3f}) -- ({tstamp:.3f}) dispatch query {query_id} to replica {api_replica.replica_id}, n: {num_queries}, pool: {api_replica.request_pool_size}', flush=True)
+                            print(f'[{datetime.now()}] >>>>> ({self.cur_timestamp():.3f}) -- ({tstamp:.3f}) dispatch query {query_id} to replica {api_replica.replica_id}, n: {num_queries}, pool: {api_replica.request_pool_size},{self.queries[0]}query_offset:{query_offset}', flush=True)
                             await request_agent.async_send(struct.pack('ii', query_id, query_offset))
 
                             self.queries.pop(0)
